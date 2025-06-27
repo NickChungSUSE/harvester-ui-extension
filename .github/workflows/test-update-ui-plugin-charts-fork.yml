@@ -1,0 +1,113 @@
+name: Test Update UI Plugin Charts Manifest (Fork)
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_version:
+        description: 'Version to test (e.g., 1.6.0)'
+        required: true
+        default: '1.6.0'
+        type: string
+      target_repo:
+        description: 'Target repository (default: NickChungSUSE/ui-plugin-charts)'
+        required: false
+        default: 'NickChungSUSE/ui-plugin-charts'
+        type: string
+
+jobs:
+  test-update-manifest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use test version
+        id: extract_version
+        run: |
+          VERSION="${{ github.event.inputs.test_version }}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Testing with version: ${VERSION}"
+          echo "Target repository: ${{ github.event.inputs.target_repo }}"
+
+      - name: Checkout ui-plugin-charts repository (fork)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.target_repo }}
+          token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+          path: ui-plugin-charts
+
+      - name: Create branch for update
+        run: |
+          cd ui-plugin-charts
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          BRANCH_NAME="test-harvester-${{ steps.extract_version.outputs.version }}-${GITHUB_SHA::7}"
+          git checkout -b "$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+      - name: Update manifest.json
+        run: |
+          set -ex
+          cd ui-plugin-charts
+
+          VERSION="${{ steps.extract_version.outputs.version }}"
+
+          # Read current manifest
+          MANIFEST=$(cat manifest.json)
+
+          # Extract current harvester versions
+          CURRENT_VERSIONS=$(echo "$MANIFEST" | jq -r '.extensions.harvester.versions[]')
+
+          # Add new version to the list and sort/uniq
+          UPDATED_VERSIONS=$(echo "$CURRENT_VERSIONS"$'\n'"$VERSION" | sort -V | uniq)
+
+          # Convert back to JSON array
+          VERSIONS_JSON=$(echo "$UPDATED_VERSIONS" | jq -R . | jq -s .)
+
+          # Update manifest.json
+          jq --argjson versions "$VERSIONS_JSON" '.extensions.harvester.versions = $versions' manifest.json > manifest.json.tmp
+          mv manifest.json.tmp manifest.json
+
+          echo "Updated manifest.json with version $VERSION"
+          cat manifest.json
+
+      - name: Commit and push changes
+        run: |
+          set -ex
+          cd ui-plugin-charts
+          git add manifest.json
+          git commit -m "TEST: Add Harvester UI Extension version ${{ steps.extract_version.outputs.version }}" || echo "No changes to commit"
+          git push origin "$BRANCH_NAME"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.CUSTOM_GITHUB_TOKEN }}
+          repository: ${{ github.event.inputs.target_repo }}
+          branch: ${{ env.BRANCH_NAME }}
+          base: main
+          title: "[TEST] Add Harvester UI Extension version ${{ steps.extract_version.outputs.version }}"
+          body: |
+            **TEST PR** - This is a test PR created by the automated workflow.
+
+            This PR adds Harvester UI Extension version ${{ steps.extract_version.outputs.version }} to the manifest.json file.
+
+            **Changes:**
+            - Added version `${{ steps.extract_version.outputs.version }}` to the Harvester extension versions list
+
+            **Test Information:**
+            - Triggered by: ${{ github.actor }}
+            - Source Repository: ${{ github.repository }}
+            - Workflow: ${{ github.workflow }}
+            - Target Repository: ${{ github.event.inputs.target_repo }}
+
+            **Note:** This is a test PR and should be closed without merging.
+          labels: |
+            test
+            harvester
+            ui-extension
+            automated
+          path: ui-plugin-charts 
