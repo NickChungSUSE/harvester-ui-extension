@@ -129,33 +129,21 @@ npx commitlint --from <start-hash> --to <end-hash>
 > **Note:**
 > The `vX.Y-head` branches are auto-generated and kept in sync with release branches. Use these for testing the latest changes in each version series.
 
-## Testing Guidelines
+## Automated Workflows
 
-### UI Extension Testing
+### UI Plugin Charts Manifest Update
 
-To validate changes in a release series, switch to the appropriate `vX.Y-head` branch. For main branch testing, use `main-head`.
+This repository includes an automated workflow that updates the [rancher/ui-plugin-charts](https://github.com/rancher/ui-plugin-charts) repository's `manifest.json` file when a new release is published.
 
-- Examples:
-  - Test `1.0.x` series → `v1.0-head`
-  - Test `1.5.x` series → `v1.5-head`
+**How it works:**
+1. When a release is published (e.g., `v1.6.0`), the workflow automatically triggers
+2. It extracts the version number from the release tag
+3. Creates a new branch in the `rancher/ui-plugin-charts` repository
+4. Updates the `manifest.json` file to include the new Harvester version
+5. Creates a pull request with the changes
+6. Assigns reviewers from the `harvester/harvester-maintainers` team
 
-**Steps:**
-1. Navigate to **Rancher UI** → **Local** → **App** → **Repositories**
-2. Refresh the Harvester repository using the target `vX.Y-head` branch
-3. Go to the **Extensions** page and install the desired version
-
-### Standalone Mode Testing
-
-To test the standalone UI, configure Harvester to load the UI from an external source.
-
-- Examples of `ui-index`:
-  - Main branch → `https://releases.rancher.com/harvester-ui/dashboard/latest/index.html`
-  - Release series `1.5.x` → `https://releases.rancher.com/harvester-ui/dashboard/release-harvester-v1.5/index.html`
-
-**Steps:**
-1. Go to **Harvester UI** → **Advanced** → **Settings** → **UI**
-2. Set **ui-source** to `External`
-3. Set **ui-index** to the desired URL
+**Workflow File:** `.github/workflows/update-ui-plugin-charts.yml`
 
 ## Contributing
 
