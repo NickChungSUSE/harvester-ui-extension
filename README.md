@@ -157,6 +157,22 @@ To test the standalone UI, configure Harvester to load the UI from an external s
 2. Set **ui-source** to `External`
 3. Set **ui-index** to the desired URL
 
+## Automated Workflows
+
+### UI Plugin Charts Manifest Update
+
+This repository includes an automated workflow that updates the [rancher/ui-plugin-charts](https://github.com/rancher/ui-plugin-charts) repository's `manifest.json` file when a new release is published.
+
+**How it works:**
+1. When a release is published (e.g., `v1.6.0`), the workflow automatically triggers
+2. It extracts the version number from the release tag
+3. Creates a new branch in the `rancher/ui-plugin-charts` repository
+4. Updates the `manifest.json` file to include the new Harvester version
+5. Creates a pull request with the changes
+6. Assigns reviewers from the `harvester/harvester-maintainers` team
+
+**Workflow File:** `.github/workflows/update-ui-plugin-charts.yml`
+
 ## Contributing
 
 If you want to contribute, start by reading this document, then visit our [Getting Started guide](https://extensions.rancher.io/extensions/next/extensions-getting-started) to learn how to develop and submit changes.
