@@ -118,11 +118,18 @@ export default {
 
     storageClassOptions() {
       return this.storageClasses.filter((s) => !s.parameters?.backingImage).map((s) => {
-        const label = s.isDefault ? `${ s.name } (${ this.t('generic.default') })` : s.name;
+        let label = s.isDefault ? `${ s.name } (${ this.t('generic.default') })` : s.name;
+        let disabled = false;
+
+        if (s.name === 'vmstate-persistence' || s.name === 'longhorn-static') {
+          label += ' (internal storage class)';
+          disabled = true;
+        }
 
         return {
           label,
           value: s.name,
+          disabled
         };
       }) || [];
     },
