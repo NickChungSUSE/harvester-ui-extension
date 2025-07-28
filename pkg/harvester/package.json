@@ -1,6 +1,6 @@
 {
   "name": "harvester",
-  "description": "Rancher UI Extension for Harvester test",
+  "description": "Rancher UI Extension for Harvester test-feat",
   "version": "1.6.0-rc2",
   "private": false,
   "rancher": {
