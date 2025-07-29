@@ -23,8 +23,8 @@ jobs:
       
       - name: Install dependencies
         run: yarn add -D conventional-changelog-cli
-      
-            - name: Generate changelog
+
+      - name: Generate changelog
         run: npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0
       
       - name: Add original authors
